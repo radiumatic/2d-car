@@ -3,7 +3,6 @@ let start = null;
 let duration = 2000; // duration of animation in milliseconds
 const car = document.getElementsByClassName('car')[0]
 const way = document.getElementsByClassName('way')[0]
-const gameover = document.getElementById('gameover')
 let collidedCount = 0
 let totalHeight = way.offsetHeight; // Total height of the element
 let currentPosition = 0; // Start position
@@ -19,6 +18,57 @@ e.style.backgroundSize = '100% auto';
 e.style.backgroundImage = "url('/assets/barrier.png')";
 e.style.left = Math.random() < 0.5 ? '196px' : '85px';
 e.style.top = '0';
+let isSigned = true
+const name = document.querySelector("#gameover > div > input")
+document.querySelector("#gameover > div > button").addEventListener('click', () => {
+  let id = null
+  console.log(!get_key('id'))
+  if (!isSigned) {
+    if (!name.value) {
+      return
+    } else {
+      id = name.value
+    }
+  } else {
+    id = get_key('id')
+  }
+  const url = 'http://localhost:8080/score';
+  const data = new FormData();
+
+  data.append('name', id);
+  data.append('score', topScore);
+  fetch(url, {
+    method: 'POST',
+    body: data
+  }).then(response => {
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    scoreCache = 0
+    collidedCount = 0
+    let hearts = document.querySelector("body > div > div.gameBoard > div.heart > div:nth-child(2)")
+    hearts.textContent = 100
+    document.querySelector("body > div > div.gameBoard > div.score > div:nth-child(4)")
+        .textContent = 0
+    for (let i = 0; i < speedChange; i++) {
+      duration = duration * 2
+      speed = speed / 2
+      speedChange = speedChange - 1
+    }
+    document.querySelector("body > div > div.gameBoard > div.car > img")
+            .setAttribute('src', '/assets/car.png')
+    set_key('id', id)
+    document.getElementById('gameover').style.display = 'none';
+    window.requestAnimationFrame(wayStep)
+    window.requestAnimationFrame(stepProvider())
+})
+.catch(error => {
+    console.log('There was a problem with the fetch operation: ' + error.message);
+});
+  
+
+
+})
 const board = document.getElementsByClassName('gameBoard')[0]
 board.appendChild(e)
 document.querySelector("#start > div > button").addEventListener('click', startGame)
@@ -32,9 +82,7 @@ function isCollide(a, b) {
     (aRect.left > (bRect.left + bRect.width))
   );
 }
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+
 
 function switchCarDirection(car) {
   // Apply a CSS transform to the image
@@ -119,35 +167,13 @@ function stepProvider() {
     if (!start) start = timestamp;
     if (collidedCount >= 5) {
       document.querySelector("body > div > div.gameBoard > div.score > div:nth-child(2)")
-        .textContent = scoreCache
-      topScore = scoreCache
-      let isSigned = null
-      const name = document.querySelector("#gameover > div > input")
-      if (!(get_key('id'))) {
+        .textContent = topScore
+      topScore = scoreCache > topScore ? scoreCache:topScore
+      if (!get_key('id')) {
         isSigned = false
         name.style.display = 'initial'
       }
-      console.log('dgege')
       document.getElementById('gameover').style.display = 'flex';
-      document.querySelector("#gameover > div > button").addEventListener('click', () => {
-        let id = null
-        if (!isSigned) {
-          if (!name.value) {
-            return
-          } else {
-            id = name.value
-          }
-        } else {
-          id = get_key('id')
-        }
-        const url = 'http://localhost:8080/score';
-        const data = new FormData();
-
-        data.append('name', id);
-        data.append('score', topScore);
-
-
-      })
       return
     }
     const progress = timestamp - start;
@@ -160,7 +186,6 @@ function stepProvider() {
       if (collidedCount < 5) {
         collidedCount = collidedCount + 1
         if (collidedCount == 1) {
-          console.log('fhreh')
           document.querySelector("body > div > div.gameBoard > div.car > img")
             .setAttribute('src', '/assets/car-crashed.png')
         }
@@ -171,7 +196,6 @@ function stepProvider() {
         window.requestAnimationFrame(step);
         let hearts = document.querySelector("body > div > div.gameBoard > div.heart > div:nth-child(2)")
         hearts.textContent = parseInt(hearts.textContent) - 20
-        console.log('fuck')
       }
       else {
 
@@ -195,9 +219,11 @@ function stepProvider() {
 
 function startGame() {
   if (get_key('id')) {
-    document.querySelector("body > div > div.gameBoard > div.score > div:nth-child(2)")
-      .textContent = fetch('http://localhost:8080/score/' + get_key('id'))
-        .then(response => response.json())[0].name
+    let pp = fetch('http://localhost:8080/score/' + encodeURIComponent(get_key('id')))
+        .then(response => response.json()).then(data => {
+          document.querySelector("body > div > div.gameBoard > div.score > div:nth-child(2)")
+        .textContent = data[0].score  // Access your data here
+      });
   }
   document.getElementById('start').style.display = 'none'
   window.requestAnimationFrame(wayStep)

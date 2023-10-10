@@ -29,15 +29,34 @@ $database->create("account", [
 ]);
 
 $app = AppFactory::create();
+$app->add(function ($request, $handler) {
+    $response = $handler->handle($request);
+    return $response
+            ->withHeader('Access-Control-Allow-Origin', '*')
+            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+});
 
 $app->post('/score', function (Request $request, Response $response, array $args) use ($database) {
     try {
         $parsedBody = $request->getParsedBody();
-        $database->insert("account", [
-            "name" => $parsedBody['name'],
-            "score" => $parsedBody['score']
-        ]);
-        $response->getBody()->write("New record created successfully");
+        $name = $parsedBody['name'];
+        $score = $parsedBody['score'];
+
+        // Check if the name already exists in the database
+        $data = $database->select("account", "*", ["name" => $name]);
+        if ($data) {
+            // If the name exists, update the score
+            $database->update("account", ["score" => $score], ["name" => $name]);
+            $response->getBody()->write("Record updated successfully");
+        } else {
+            // If the name does not exist, insert a new record
+            $database->insert("account", [
+                "name" => $name,
+                "score" => $score
+            ]);
+            $response->getBody()->write("New record created successfully");
+        }
     } catch (Exception $e) {
         $response->getBody()->write($e->getMessage());
         return $response->withStatus(400);
