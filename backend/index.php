@@ -48,7 +48,7 @@ $app->post('/score', function (Request $request, Response $response, array $args
 $app->get('/score/{id}', function (Request $request, Response $response, array $args) use ($database) {
     try {
         $id = $args['id'];
-        $data = $database->select("account", "*", ["id" => $id]);
+        $data = $database->select("account", "*", ["name" => $id]);
         if ($data) {
             $response->getBody()->write(json_encode($data));
         } else {
