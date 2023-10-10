@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        #myImage {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            transition: transform 0.25s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <img d="right" id="myImage" src="/assets/car.png" alt="Your Image" style="margin-left: 25px;">
+    <button onclick="moveImage()">Move</button>
+
+    <script>
+        function moveImage() {
+            // Get a reference to the image you want to animate
+            var img = document.getElementById('myImage');
+
+            // Apply a CSS transform to the image
+            img.style.transform = 'translateX(100px) rotate(-15deg)';
+            if (img.getAttribute('d') == 'right'){
+                img.style.transform = 'translateX(100px) rotate(-15deg)';
+                setTimeout(function() {
+                    img.style.transform = 'translateX(100px) rotate(0deg)';
+                }, 250);
+                img.setAttribute('d', 'left')
+            } else {
+                img.style.transform = 'translateX(-100px) rotate(15deg)';
+                setTimeout(function() {
+                    img.style.transform = 'translateX(-100px) rotate(0deg)';
+                }, 250);
+                img.setAttribute('d', 'right')
+            }
+            // After 0.5 seconds, remove the rotation
+        }
+    </script>
+</body>
+</html>
